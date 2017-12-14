@@ -95,9 +95,96 @@ public class TagViewRecyclerViewAdapter
 
     private boolean IS_EMPTY = false;
 
-    public TagViewRecyclerViewAdapter(List<CoCoinRecord> coCoinRecords, Context context, int position) {
 
-        mContext = context;
+    public void tres(){
+        if (coCoinRecord.getCalendar().get(Calendar.MONTH) == month - 1) {
+            monthSet.add(coCoinRecord);
+            monthSum += coCoinRecord.getMoney();
+        } else {
+            contents.add(monthSet);
+            SumList.add(monthSum);
+            monthSum = coCoinRecord.getMoney();
+            type.add(SHOW_IN_MONTH);
+            monthSet = new ArrayList<>();
+            monthSet.add(coCoinRecord);
+            month = coCoinRecord.getCalendar().get(Calendar.MONTH) + 1;
+        }
+    }
+
+
+    public void checkRecords(){
+        for (CoCoinRecord coCoinRecord : coCoinRecords) {
+            Sum += coCoinRecord.getMoney();
+            if (coCoinRecord.getCalendar().get(Calendar.YEAR) == year) {
+                yearSet.add(coCoinRecord);
+                yearSum += coCoinRecord.getMoney();
+                tres();
+
+            } else {
+                contents.add(monthSet);
+                SumList.add(monthSum);
+                monthSum = coCoinRecord.getMoney();
+                type.add(SHOW_IN_MONTH);
+                monthSet = new ArrayList<>();
+                monthSet.add(coCoinRecord);
+                month = coCoinRecord.getCalendar().get(Calendar.MONTH) + 1;
+
+                contents.add(yearPosition, yearSet);
+                SumList.add(yearPosition, yearSum);
+                yearSum = coCoinRecord.getMoney();
+                type.add(yearPosition, SHOW_IN_YEAR);
+                yearPosition = contents.size();
+                yearSet = new ArrayList<>();
+                yearSet.add(coCoinRecord);
+                year = coCoinRecord.getCalendar().get(Calendar.YEAR);
+                monthSet = new ArrayList<>();
+                monthSet.add(coCoinRecord);
+                month = coCoinRecord.getCalendar().get(Calendar.MONTH) + 1;
+            }
+        }
+    }
+
+    public void structure(){
+        for (CoCoinRecord coCoinRecord : contents.get(i)) {
+            double d = tagExpanse.get(coCoinRecord.getTag());
+            d += coCoinRecord.getMoney();
+            tagExpanse.put(coCoinRecord.getTag(), d);
+        }
+    }
+
+    public void checkPIE(){
+        if (chartType == PIE) {
+            AllTagExpanse = new ArrayList<>();
+            for (int i = 0; i < contents.size(); i++) {
+
+                Map<Integer, Double> tagExpanse = new TreeMap<>();
+
+                for (Tag tag : RecordManager.TAGS) {
+                    tagExpanse.put(tag.getId(), Double.valueOf(0));
+                }
+
+                structure();
+
+                tagExpanse = CoCoinUtil.SortTreeMapByValues(tagExpanse);
+
+                AllTagExpanse.add(tagExpanse);
+            }
+        }
+    }
+
+
+    private void checkFragment(){
+        switch(fragmentPosition){
+            case 0:
+                fragmentTagId = -2;
+                break;
+            case 1:
+                fragmentTagId = -1;
+                break;
+        }
+    }
+
+    public void ff(){
         fragmentPosition = position;
         switch(position){
             case 0:
@@ -109,7 +196,27 @@ public class TagViewRecyclerViewAdapter
             default:
                 chartType = HISTOGRAM;
         }
+    }
 
+    public void sparh(){
+        for (CoCoinRecord coCoinRecord : coCoinRecords) {
+            MonthExpanseSum[(coCoinRecord.getCalendar().get(Calendar.YEAR) - startYear) * 12 +
+                    coCoinRecord.getCalendar().get(Calendar.MONTH)] += (int) coCoinRecord.getMoney();
+        }
+
+        SelectedPosition = new int[contents.size() + 1];
+        for (int i = 0; i < SelectedPosition.length; i++) {
+            SelectedPosition[i] = 0;
+        }
+
+    }
+
+
+    public TagViewRecyclerViewAdapter(List<CoCoinRecord> coCoinRecords, Context context, int position) {
+
+        mContext = context;
+
+        ff();
         IS_EMPTY = coCoinRecords.isEmpty();
 
         Sum = 0;
@@ -135,45 +242,8 @@ public class TagViewRecyclerViewAdapter
             List<CoCoinRecord> yearSet = new ArrayList<>();
             List<CoCoinRecord> monthSet = new ArrayList<>();
 
-            for (CoCoinRecord coCoinRecord : coCoinRecords) {
-                Sum += coCoinRecord.getMoney();
-                if (coCoinRecord.getCalendar().get(Calendar.YEAR) == year) {
-                    yearSet.add(coCoinRecord);
-                    yearSum += coCoinRecord.getMoney();
-                    if (coCoinRecord.getCalendar().get(Calendar.MONTH) == month - 1) {
-                        monthSet.add(coCoinRecord);
-                        monthSum += coCoinRecord.getMoney();
-                    } else {
-                        contents.add(monthSet);
-                        SumList.add(monthSum);
-                        monthSum = coCoinRecord.getMoney();
-                        type.add(SHOW_IN_MONTH);
-                        monthSet = new ArrayList<>();
-                        monthSet.add(coCoinRecord);
-                        month = coCoinRecord.getCalendar().get(Calendar.MONTH) + 1;
-                    }
-                } else {
-                    contents.add(monthSet);
-                    SumList.add(monthSum);
-                    monthSum = coCoinRecord.getMoney();
-                    type.add(SHOW_IN_MONTH);
-                    monthSet = new ArrayList<>();
-                    monthSet.add(coCoinRecord);
-                    month = coCoinRecord.getCalendar().get(Calendar.MONTH) + 1;
+            checkRecords();
 
-                    contents.add(yearPosition, yearSet);
-                    SumList.add(yearPosition, yearSum);
-                    yearSum = coCoinRecord.getMoney();
-                    type.add(yearPosition, SHOW_IN_YEAR);
-                    yearPosition = contents.size();
-                    yearSet = new ArrayList<>();
-                    yearSet.add(coCoinRecord);
-                    year = coCoinRecord.getCalendar().get(Calendar.YEAR);
-                    monthSet = new ArrayList<>();
-                    monthSet.add(coCoinRecord);
-                    month = coCoinRecord.getCalendar().get(Calendar.MONTH) + 1;
-                }
-            }
             contents.add(monthSet);
             SumList.add(monthSum);
             type.add(SHOW_IN_MONTH);
@@ -184,27 +254,7 @@ public class TagViewRecyclerViewAdapter
             startYear = year;
             startMonth = month;
 
-            if (chartType == PIE) {
-                AllTagExpanse = new ArrayList<>();
-                for (int i = 0; i < contents.size(); i++) {
-
-                    Map<Integer, Double> tagExpanse = new TreeMap<>();
-
-                    for (Tag tag : RecordManager.TAGS) {
-                        tagExpanse.put(tag.getId(), Double.valueOf(0));
-                    }
-
-                    for (CoCoinRecord coCoinRecord : contents.get(i)) {
-                        double d = tagExpanse.get(coCoinRecord.getTag());
-                        d += coCoinRecord.getMoney();
-                        tagExpanse.put(coCoinRecord.getTag(), d);
-                    }
-
-                    tagExpanse = CoCoinUtil.SortTreeMapByValues(tagExpanse);
-
-                    AllTagExpanse.add(tagExpanse);
-                }
-            }
+            checkPIE();
 
             if (chartType == SUM_HISTOGRAM) {
                 DayExpanseSum = new int[(endYear - startYear + 1) * 372];
@@ -216,25 +266,9 @@ public class TagViewRecyclerViewAdapter
             }
 
             MonthExpanseSum = new int[(endYear - startYear + 1) * 12];
-            for (CoCoinRecord coCoinRecord : coCoinRecords) {
-                MonthExpanseSum[(coCoinRecord.getCalendar().get(Calendar.YEAR) - startYear) * 12 +
-                        coCoinRecord.getCalendar().get(Calendar.MONTH)] += (int) coCoinRecord.getMoney();
-            }
-
-            SelectedPosition = new int[contents.size() + 1];
-            for (int i = 0; i < SelectedPosition.length; i++) {
-                SelectedPosition[i] = 0;
-            }
-
+            sparh();
             fragmentTagId = contents.get(0).get(0).getTag();
-            switch(fragmentPosition){
-                case 0:
-                    fragmentTagId = -2;
-                    break;
-                case 1:
-                    fragmentTagId = -1;
-                    break;
-            }
+            checkFragment();
         }
     }
 
@@ -367,48 +401,22 @@ public class TagViewRecyclerViewAdapter
 
     }
 
-    public void function4(final viewHolder holder, final int position){
-        ColumnChartData columnChartData;
-        List<SubcolumnValue> subcolumnValues;
-        final List<Column> columns;
-        columns = new ArrayList<>();
-        if (type.get(position - 1).equals(SHOW_IN_YEAR)) {
-            int numColumns = 12;
-            for (int i = 0; i < numColumns; i++) {
-                subcolumnValues = new ArrayList<>();
-                SubcolumnValue value = new SubcolumnValue(
-                        MonthExpanseSum[(year - startYear) * 12 + i],
-                        CoCoinUtil.GetRandomColor());
-                value.setLabel(CoCoinUtil.MONTHS_SHORT[month] + " " + year);
-                subcolumnValues.add(value);
-                Column column = new Column(subcolumnValues);
-                column.setHasLabels(false);
-                column.setHasLabelsOnlyForSelected(false);
-                columns.add(column);
-            }
-
-            columnChartData = new ColumnChartData(columns);
-
-            Axis axisX = new Axis();
-            List<AxisValue> axisValueList = new ArrayList<>();
-            for (int i = 0; i < numColumns; i++) {
-                axisValueList.add(new AxisValue(i)
-                        .setLabel(CoCoinUtil.GetMonthShort(i + 1)));
-            }
-            axisX.setValues(axisValueList);
-            Axis axisY = new Axis().setHasLines(true);
-            columnChartData.setAxisXBottom(axisX);
-            columnChartData.setAxisYLeft(axisY);
-            columnChartData.setStacked(true);
-
-            holder.chart.setColumnChartData(columnChartData);
-            holder.chart.setZoomEnabled(false);
-            holder.chart.setOnValueTouchListener(
-                    new ValueTouchListener(position - 1));
-
-            holder.date.setText(year + "");
-            holder.expanse.setText(CoCoinUtil.GetInMoney((int)(double)SumList.get(position - 1)));
+    private void f4_1(){
+        for (int i = 0; i < numColumns; i++) {
+            subcolumnValues = new ArrayList<>();
+            SubcolumnValue value = new SubcolumnValue(
+                    MonthExpanseSum[(year - startYear) * 12 + i],
+                    CoCoinUtil.GetRandomColor());
+            value.setLabel(CoCoinUtil.MONTHS_SHORT[month] + " " + year);
+            subcolumnValues.add(value);
+            Column column = new Column(subcolumnValues);
+            column.setHasLabels(false);
+            column.setHasLabelsOnlyForSelected(false);
+            columns.add(column);
         }
+    }
+
+    private void f4_2(){
         if (type.get(position - 1).equals(SHOW_IN_MONTH)) {
             Calendar tempCal = new GregorianCalendar(year, month - 1, 1);
             int daysInMonth = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH);
@@ -428,6 +436,78 @@ public class TagViewRecyclerViewAdapter
                 column.setHasLabelsOnlyForSelected(false);
                 columns.add(column);
             }
+    }
+
+    private void f4_3(){
+            public void onClick(View v) {
+                do {
+                    SelectedPosition[position]
+                            = (SelectedPosition[position] + 1) % columns.size();
+                } while (holder.chart.getChartData().getColumns()
+                        .get(SelectedPosition[position])
+                        .getValues().size() == 0 ||
+                        holder.chart.getChartData().getColumns()
+                                .get(SelectedPosition[position])
+                                .getValues().get(0).getValue() == 0);
+                SelectedValue selectedValue =
+                        new SelectedValue(
+                                SelectedPosition[position],
+                                0,
+                                SelectedValue.SelectedValueType.COLUMN);
+                holder.chart.selectValue(selectedValue);
+            }
+        }
+
+        private void f4_5(){
+            for (int i = 0; i < numColumns; i++) {
+                axisValueList.add(new AxisValue(i)
+                        .setLabel(CoCoinUtil.GetMonthShort(i + 1)));
+            }
+        }
+
+
+        private void funz4_6(){
+            for (int i = 0; i < numColumns; i++) {
+                subcolumnValues = new ArrayList<>();
+                SubcolumnValue value = new SubcolumnValue(
+                        MonthExpanseSum[(year - startYear) * 12 + i],
+                        CoCoinUtil.GetRandomColor());
+                value.setLabel(CoCoinUtil.MONTHS_SHORT[month] + " " + year);
+                subcolumnValues.add(value);
+                Column column = new Column(subcolumnValues);
+                column.setHasLabels(false);
+                column.setHasLabelsOnlyForSelected(false);
+                columns.add(column);
+            }
+    }
+
+    public void function4(final viewHolder holder, final int position){
+        ColumnChartData columnChartData;
+        List<SubcolumnValue> subcolumnValues;
+        final List<Column> columns;
+        columns = new ArrayList<>();
+        if (type.get(position - 1).equals(SHOW_IN_YEAR)) {
+            int numColumns = 12;
+
+            columnChartData = new ColumnChartData(columns);
+
+            Axis axisX = new Axis();
+            List<AxisValue> axisValueList = new ArrayList<>();
+            f4_5();
+            axisX.setValues(axisValueList);
+            Axis axisY = new Axis().setHasLines(true);
+            columnChartData.setAxisXBottom(axisX);
+            columnChartData.setAxisYLeft(axisY);
+            columnChartData.setStacked(true);
+
+            holder.chart.setColumnChartData(columnChartData);
+            holder.chart.setZoomEnabled(false);
+            holder.chart.setOnValueTouchListener(
+                    new ValueTouchListener(position - 1));
+
+            holder.date.setText(year + "");
+            holder.expanse.setText(CoCoinUtil.GetInMoney((int)(double)SumList.get(position - 1)));
+        }
 
             columnChartData = new ColumnChartData(columns);
 
@@ -452,46 +532,40 @@ public class TagViewRecyclerViewAdapter
 
         holder.iconRight.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                do {
-                    SelectedPosition[position]
-                            = (SelectedPosition[position] + 1) % columns.size();
-                } while (holder.chart.getChartData().getColumns()
-                        .get(SelectedPosition[position])
-                        .getValues().size() == 0 ||
-                        holder.chart.getChartData().getColumns()
-                                .get(SelectedPosition[position])
-                                .getValues().get(0).getValue() == 0);
-                SelectedValue selectedValue =
-                        new SelectedValue(
-                                SelectedPosition[position],
-                                0,
-                                SelectedValue.SelectedValueType.COLUMN);
-                holder.chart.selectValue(selectedValue);
-            }
+            f4_3();
         });
 
         holder.iconLeft.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                do {
-                    SelectedPosition[position]
-                            = (SelectedPosition[position] - 1 + columns.size())
-                            % columns.size();
-                } while (holder.chart.getChartData().getColumns()
-                        .get(SelectedPosition[position])
-                        .getValues().size() == 0 ||
-                        holder.chart.getChartData().getColumns()
-                                .get(SelectedPosition[position])
-                                .getValues().get(0).getValue() == 0);
-                SelectedValue selectedValue =
-                        new SelectedValue(
-                                SelectedPosition[position],
-                                0,
-                                SelectedValue.SelectedValueType.COLUMN);
-                holder.chart.selectValue(selectedValue);
-            }
+           f4_3();
         });
+    }
+
+
+    private void f5_1(){
+        while (p >= 0
+                && contents.get(position - 1).get(p).getCalendar().
+                get(Calendar.DAY_OF_MONTH) == i + 1) {
+            subcolumnValues.get(0).setValue(
+                    subcolumnValues.get(0).getValue() +
+                            (float) contents.get(position - 1).get(p).getMoney());
+            subcolumnValues.get(0).setLabel(p + "");
+            p--;
+        }
+    }
+
+    private void f5_2(){
+        for (int i = 0; i < numColumns; ++i) {
+            subcolumnValues = new ArrayList<>();
+            SubcolumnValue value = new SubcolumnValue(0,
+                    CoCoinUtil.GetRandomColor());
+            subcolumnValues.add(value);
+            f5_1();
+            Column column = new Column(subcolumnValues);
+            column.setHasLabels(false);
+            column.setHasLabelsOnlyForSelected(false);
+            columns.add(column);
+        }
     }
 
     public void function5(final viewHolder holder, final int position){
@@ -501,19 +575,7 @@ public class TagViewRecyclerViewAdapter
         columns = new ArrayList<>();
         if (type.get(position - 1).equals(SHOW_IN_YEAR)) {
             int numColumns = 12;
-            for (int i = 0; i < numColumns; i++) {
-                subcolumnValues = new ArrayList<>();
-                SubcolumnValue value = new SubcolumnValue(
-                        MonthExpanseSum[(year - startYear) * 12 + i],
-                        CoCoinUtil.GetRandomColor());
-                value.setLabel(CoCoinUtil.MONTHS_SHORT[month] + " " + year);
-                subcolumnValues.add(value);
-                Column column = new Column(subcolumnValues);
-                column.setHasLabels(false);
-                column.setHasLabelsOnlyForSelected(false);
-                columns.add(column);
-            }
-
+            funz4_6();
             columnChartData = new ColumnChartData(columns);
 
             Axis axisX = new Axis();
@@ -544,27 +606,7 @@ public class TagViewRecyclerViewAdapter
             int daysInMonth = tempCal.getActualMaximum(Calendar.DAY_OF_MONTH);
             int p = contents.get(position - 1).size() - 1;
             int numColumns = daysInMonth;
-
-            for (int i = 0; i < numColumns; ++i) {
-                subcolumnValues = new ArrayList<>();
-                SubcolumnValue value = new SubcolumnValue(0,
-                        CoCoinUtil.GetRandomColor());
-                subcolumnValues.add(value);
-                while (p >= 0
-                        && contents.get(position - 1).get(p).getCalendar().
-                        get(Calendar.DAY_OF_MONTH) == i + 1) {
-                    subcolumnValues.get(0).setValue(
-                            subcolumnValues.get(0).getValue() +
-                                    (float) contents.get(position - 1).get(p).getMoney());
-                    subcolumnValues.get(0).setLabel(p + "");
-                    p--;
-                }
-                Column column = new Column(subcolumnValues);
-                column.setHasLabels(false);
-                column.setHasLabelsOnlyForSelected(false);
-                columns.add(column);
-            }
-
+            f5_2();
             columnChartData = new ColumnChartData(columns);
 
             Axis axisX = new Axis();
@@ -837,27 +879,14 @@ public class TagViewRecyclerViewAdapter
         }
 
 
-        @Override
-        public void onValueSelected(int i, SliceValue sliceValue) {
-            String text = "";
-            String timeString = contents.get(position).get(0).getCalendarString();
-            int month = contents.get(position).get(0).getCalendar().get(Calendar.MONTH) + 1;
-            timeString = timeString.substring(6, timeString.length());
-            if (type.get(position).equals(SHOW_IN_YEAR)) {
-                timeString = timeString.substring(timeString.length() - 4, timeString.length());
-            } else {
-                timeString = CoCoinUtil.GetMonthShort(month) + " " +
-                        timeString.substring(timeString.length() - 4, timeString.length());
-            }
-            final int tagId = Integer.valueOf(String.valueOf(sliceValue.getLabelAsChars()));
-            Double percent = sliceValue.getValue() / SumList.get(position) * 100;
+        private void language(){
             if ("zh".equals(CoCoinUtil.GetLanguage())) {
                 text = CoCoinUtil.GetSpendString((int) sliceValue.getValue()) +
                         CoCoinUtil.GetPercentString(percent) + "\n" +
                         "于" + CoCoinUtil.GetTagName(tagId);
-                    dialogTitle = mContext.getResources().getString(R.string.in) + timeString +
-                            CoCoinUtil.GetSpendString((int) sliceValue.getValue()) + "\n" +
-                            "于" + CoCoinUtil.GetTagName(tagId);
+                dialogTitle = mContext.getResources().getString(R.string.in) + timeString +
+                        CoCoinUtil.GetSpendString((int) sliceValue.getValue()) + "\n" +
+                        "于" + CoCoinUtil.GetTagName(tagId);
 
             } else {
                 text = CoCoinUtil.GetSpendString((int) sliceValue.getValue()) +
@@ -867,6 +896,28 @@ public class TagViewRecyclerViewAdapter
                         mContext.getResources().getString(R.string.in) + timeString + "\n" +
                         "in " + CoCoinUtil.GetTagName(RecordManager.TAGS.get(tagId).getId());
             }
+        }
+
+        public void ceck(){
+            if (type.get(position).equals(SHOW_IN_YEAR)) {
+                timeString = timeString.substring(timeString.length() - 4, timeString.length());
+            } else {
+                timeString = CoCoinUtil.GetMonthShort(month) + " " +
+                        timeString.substring(timeString.length() - 4, timeString.length());
+            }
+        }
+
+        @Override
+        public void onValueSelected(int i, SliceValue sliceValue) {
+            String text = "";
+            String timeString = contents.get(position).get(0).getCalendarString();
+            int month = contents.get(position).get(0).getCalendar().get(Calendar.MONTH) + 1;
+            timeString = timeString.substring(6, timeString.length());
+            ceck();
+            final int tagId = Integer.valueOf(String.valueOf(sliceValue.getLabelAsChars()));
+            Double percent = sliceValue.getValue() / SumList.get(position) * 100;
+            language();
+
             Snackbar snackbar =
                     Snackbar
                             .with(mContext)
